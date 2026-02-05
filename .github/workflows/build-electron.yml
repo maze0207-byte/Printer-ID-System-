@@ -1,0 +1,43 @@
+name: Build Electron App
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+        
+      - name: Install Electron dependencies
+        working-directory: electron-app
+        run: npm install
+
+      - name: Build Electron app
+        working-directory: electron-app
+        run: npm run package:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ID-Forge-Windows
+          path: electron-app/release/*.exe
+          retention-days: 30
